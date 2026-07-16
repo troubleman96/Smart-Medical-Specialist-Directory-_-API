@@ -78,33 +78,142 @@ Each domain app (other than `notifications`) generally follows: `models.py` → 
 - PostgreSQL (optional locally — defaults to SQLite if `DATABASE_URL` is unset)
 - Redis (for Celery; the app runs without it, but every SMS silently no-ops if the broker isn't reachable)
 
-### Setup
+### Setup — Windows, step by step (no programming experience needed)
+
+This walks through everything from "empty Windows machine" to "server running," typing each command exactly as shown into **PowerShell** (search "PowerShell" in the Start menu, click to open — you don't need to run it as Administrator).
+
+**1. Install Python.**
+Go to [python.org/downloads](https://www.python.org/downloads/) and download the latest Python 3.12.x installer. Run it. **On the very first install screen, tick the checkbox "Add python.exe to PATH" at the bottom before clicking Install** — this is the single most common thing people forget, and without it Windows won't know what `python` means when you type it. If you already installed Python without ticking that box, re-run the installer and choose "Modify" → make sure "Add to PATH" is on.
+
+Confirm it worked — close and reopen PowerShell, then run:
+```powershell
+python --version
+```
+It should print something like `Python 3.12.x`. If you instead get "python is not recognized," the PATH step above didn't take — reinstall and tick the box.
+
+**2. Get the project folder onto your machine.**
+If you were given the project as a `.zip` file, right-click it → "Extract All..." and pick a simple location like `C:\Kindamba`. If you're using Git, install it from [git-scm.com](https://git-scm.com/download/win) (defaults are fine) and run `git clone <repo-url>` from PowerShell.
+
+**3. Move into the folder.**
+```powershell
+cd C:\Kindamba          # adjust this path to wherever you extracted/cloned it
+```
+
+**4. Create a virtual environment.**
+This is a private, isolated copy of Python just for this project, so it doesn't clash with anything else on your machine.
+```powershell
+python -m venv venv
+```
+This creates a `venv` folder — you'll see it appear in File Explorer. You only do this step once.
+
+**5. Activate the virtual environment.**
+You need to do this **every time** you open a new PowerShell window to work on this project:
+```powershell
+venv\Scripts\Activate.ps1
+```
+Your prompt should now start with `(venv)`. If instead you see a red error like *"running scripts is disabled on this system"* — this is Windows' default security setting blocking the activation script, not a real problem. Fix it once, in the same PowerShell window, by running:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+Type `Y` and press Enter if it asks for confirmation, then retry `venv\Scripts\Activate.ps1`.
+
+**6. Move into the `backend` folder and install the project's dependencies.**
+```powershell
+cd backend
+pip install -r requirements\dev.txt
+```
+This downloads everything the project needs (Django, etc.) — it can take a minute or two and will print a lot of text; that's normal.
+
+**7. Create your `.env` file.**
+This is the private configuration file with settings and secrets. See the dedicated **[Setting up your `.env` file](#setting-up-your-env-file-explained-simply)** section below for a full, plain-English walkthrough — come back here once it's created.
+
+**8. Set up the database and start the server.**
+```powershell
+python manage.py migrate
+python manage.py runserver
+```
+Leave this window open — this *is* the server running. You should see `Starting development server at http://127.0.0.1:8000/`.
+
+**9. Confirm it's working.**
+Open a web browser and go to `http://localhost:8000/api/health/`. You should see:
+```json
+{"success":true,"message":"Service is healthy.","data":{"status":"healthy"},"errors":null,"meta":null}
+```
+That means the API is up. To stop the server later, click into that PowerShell window and press `Ctrl+C`.
+
+Next time you want to run it again, you only need steps 3, 5, and 8 (no need to recreate the virtual environment or reinstall dependencies).
+
+### Setup — macOS / Linux
 
 ```bash
 cd Kindamba
 python3 -m venv venv
-source venv/bin/activate            # Windows: venv\Scripts\activate
+source venv/bin/activate
 
 cd backend
 pip install -r requirements/dev.txt
 
-cp .env.example .env                # then fill in real values
+cp .env.example .env                # then see the .env section below and fill in real values
+
+python manage.py migrate
+python manage.py runserver           # http://localhost:8000
 ```
 
-`.env` variables (all read via `django-environ` in `config/settings/base.py`):
+### Setting up your `.env` file (explained simply)
 
-| Variable | Purpose | Local default |
+A `.env` file holds settings and secret keys that are specific to your machine and should **never** be committed to git or shared publicly (it's already listed in `.gitignore`, so git will ignore it automatically). The project ships a `.env.example` template with placeholder values — you copy it to a real `.env` file and fill in the parts that matter.
+
+**Creating the file on Windows** (a common trap: Notepad likes to save files as `something.env.txt`, which Django won't recognize):
+
+1. In PowerShell, inside the `backend` folder, run:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   This makes a real copy named exactly `.env`, sidestepping the Notepad trap entirely.
+2. To edit it, right-click `.env` in File Explorer → "Open with" → Notepad (if `.env` doesn't show up in File Explorer, turn on "Show hidden files" in the View menu — dotfiles are hidden by default on Windows).
+
+On macOS/Linux, the same idea:
+```bash
+cp .env.example .env
+nano .env        # or: open .env in any text editor
+```
+
+**What to put in it.** For running locally on your own machine (not a real deployment), this is a good starting `.env` — copy this in, replacing only the `DJANGO_SECRET_KEY` value (explained below):
+
+```env
+# Django
+DJANGO_SECRET_KEY=paste-a-random-string-here-see-below
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database — leave this out entirely for local dev; it falls back to a local
+# SQLite file (db.sqlite3) automatically, which is the easiest option and
+# needs no separate database software installed.
+# DATABASE_URL=postgres://user:password@localhost:5432/kindamba_db
+
+# Redis / Celery — only needed if you're running the Celery worker for SMS.
+# These are the standard defaults for a locally installed Redis; leave as-is.
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# SendAfrica SMS — leave blank if you don't have a key yet (see below).
+SENDAFRICA_API_KEY=
+SENDAFRICA_BASE_URL=https://api.sendafrica.online
+```
+
+**Field by field, in plain English:**
+
+| Variable | What it means | What to do |
 |---|---|---|
-| `DJANGO_SECRET_KEY` | Django secret key | insecure dev key |
-| `DJANGO_DEBUG` | Debug mode | `False` (set `True` locally) |
-| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts | `*` in dev |
-| `DATABASE_URL` | DB connection string (`env.db(...)`) | `sqlite:///db.sqlite3` if unset |
-| `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` | Redis URLs | `redis://localhost:6379/0` |
-| `SENDAFRICA_API_KEY` | SendAfrica API key — **required** for any SMS to actually send; without it `SmsService.send` raises `SmsDeliveryError` and the Celery task marks the notification `FAILED` | `''` |
-| `SENDAFRICA_BASE_URL` | SendAfrica API base URL | `https://api.sendafrica.online` |
-| `CORS_ALLOWED_ORIGINS` | Prod only — explicit CORS allowlist (`config/settings/prod.py`) | `[]` |
+| `DJANGO_SECRET_KEY` | A random secret Django uses internally to sign sessions/tokens securely. It's not a password you need to remember — just a long random string. | **Must change from the placeholder.** Easiest way: with your virtual environment activated, run `python -c "import secrets; print(secrets.token_urlsafe(50))"` and paste the output in as the value. |
+| `DJANGO_DEBUG` | Whether Django shows detailed error pages (helpful while developing) or hides them (required for anything real people will use). | `True` while testing locally on your own machine. **Always `False` for a real/public deployment** — leaving debug mode on in production leaks internal details to anyone who hits an error. |
+| `DJANGO_ALLOWED_HOSTS` | Which hostnames are allowed to reach this server — a security guard against fake "Host" headers. | `localhost,127.0.0.1` for local use. If deploying to a real domain, set it to that domain instead. |
+| `DATABASE_URL` | Where the app stores its data (hospitals, users, appointments, ...). | Leave this line out (or commented out, as above) to use a simple local file (`db.sqlite3`) — nothing extra to install. Only set this if you've installed PostgreSQL and want to use it instead. |
+| `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` | Address of Redis, used to queue and track background SMS-sending jobs. | Leave as the default shown above **if** you have Redis installed and running locally. If you don't, that's fine — the app still runs, it just can't send SMS (see below). |
+| `SENDAFRICA_API_KEY` | Your secret key for the SendAfrica SMS service, so the app can actually send text messages (OTP codes, booking confirmations, etc.). | Leave blank if you don't have one yet — the rest of the app works fine; any SMS just gets logged as failed instead of sent (nothing crashes). Fill in a real key (from whoever manages the SendAfrica account) once you want real SMS to go out. |
+| `SENDAFRICA_BASE_URL` | The web address of the SendAfrica service itself. | Leave as the default shown above — there's no reason to change this. |
 
-In dev, `CORS_ALLOW_ALL_ORIGINS = DEBUG` (i.e. `True`), so any origin can call the API locally. In prod, CORS is locked to `CORS_ALLOWED_ORIGINS`.
+You don't need Redis or a SendAfrica key just to get the server running and explore the API — they only matter once you're testing the SMS/notification features specifically.
 
 ### Run migrations and start the server
 
