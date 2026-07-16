@@ -113,6 +113,21 @@ class NotificationDispatcher:
         )
 
     @staticmethod
+    def appointment_requested(appointment):
+        message = (
+            f"Your appointment request {appointment.reference_number} has been received.\n"
+            f"Specialist: Dr. {appointment.specialist.full_name}\n"
+            f"Hospital: {appointment.hospital.name}\n"
+            f"Date: {appointment.scheduled_at.strftime('%d %B %Y at %H:%M')}\n"
+            f"We'll SMS you once the hospital confirms."
+        )
+        return NotificationDispatcher._send(
+            phone_number=appointment.patient.phone_number,
+            message=message,
+            appointment=appointment,
+        )
+
+    @staticmethod
     def new_booking_for_hospital(appointment):
         hospital = appointment.hospital
         phone = hospital.phone
@@ -132,6 +147,38 @@ class NotificationDispatcher:
             message=message,
             appointment=appointment,
         )
+
+    @staticmethod
+    def otp_verification(user, code):
+        message = (
+            f"Your Kindamba verification code is {code}. "
+            f"It expires in 10 minutes. Do not share this code with anyone."
+        )
+        return NotificationDispatcher._send(phone_number=user.phone_number, message=message)
+
+    @staticmethod
+    def hospital_registration_received(hospital, admin_phone):
+        message = (
+            f"Kindamba: Registration received for '{hospital.name}'.\n"
+            f"Your application is pending verification. We'll SMS you once it's reviewed."
+        )
+        return NotificationDispatcher._send(phone_number=admin_phone, message=message)
+
+    @staticmethod
+    def hospital_verified(hospital, admin_phone):
+        message = (
+            f"Kindamba: Congratulations! '{hospital.name}' has been verified and is now live.\n"
+            f"Patients can now find and book your specialists."
+        )
+        return NotificationDispatcher._send(phone_number=admin_phone, message=message)
+
+    @staticmethod
+    def hospital_suspended(hospital, admin_phone):
+        message = (
+            f"Kindamba: '{hospital.name}' has been suspended on Kindamba.\n"
+            f"Contact support for details."
+        )
+        return NotificationDispatcher._send(phone_number=admin_phone, message=message)
 
     @staticmethod
     def _send(phone_number, message, appointment=None):

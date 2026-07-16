@@ -25,9 +25,10 @@ class RegisterHospitalSerializer(serializers.Serializer):
     address = serializers.CharField()
     phone = serializers.CharField(max_length=20)
     email = serializers.EmailField()
-    admin_username = serializers.CharField(max_length=150)
-    admin_email = serializers.EmailField()
+    admin_phone_number = serializers.CharField(max_length=20)
     admin_password = serializers.CharField(min_length=8, write_only=True)
+    admin_username = serializers.CharField(max_length=150, required=False, default='')
+    admin_email = serializers.EmailField(required=False, default='')
 
 
 class VerifyHospitalSerializer(serializers.Serializer):

@@ -16,7 +16,7 @@ class RegisterHospitalService:
     @staticmethod
     @transaction.atomic
     def register(name, registration_no, latitude, longitude, address, phone, email,
-                 admin_username, admin_email, admin_password):
+                 admin_phone_number, admin_password, admin_username='', admin_email=''):
         if Hospital.objects.filter(registration_no=registration_no).exists():
             raise ValueError('Registration number already exists.')
 
@@ -31,14 +31,14 @@ class RegisterHospitalService:
             status=HospitalStatus.PENDING,
         )
 
-        user = User.objects.create(
+        from apps.accounts.services import RegisterUserService
+        user = RegisterUserService.register_hospital_admin(
+            phone_number=admin_phone_number,
+            password=admin_password,
+            hospital=hospital,
             username=admin_username,
             email=admin_email,
-            role=User.Role.HOSPITAL_ADMIN,
-            hospital=hospital,
         )
-        user.set_password(admin_password)
-        user.save()
 
         return hospital, user
 

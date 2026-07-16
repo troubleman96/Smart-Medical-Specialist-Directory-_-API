@@ -18,6 +18,7 @@ def api_client():
 def super_admin():
     user = User.objects.create_superuser(
         username='superadmin', email='super@test.com', password='adminpass123',
+        phone_number='+255714345678',
     )
     user.role = User.Role.SUPER_ADMIN
     user.save()
@@ -34,7 +35,7 @@ def seed_data(super_admin):
     )
     admin = User.objects.create_user(
         username='admin1', email='admin1@test.com', password='pass123',
-        role='HOSPITAL_ADMIN', hospital=hospital,
+        role='HOSPITAL_ADMIN', hospital=hospital, phone_number='+255713345678',
     )
     Specialist.objects.create(
         hospital=hospital, full_name='Dr. Amina', specialization='Cardiology',
@@ -51,7 +52,7 @@ def seed_data(super_admin):
 class TestOverviewReport:
     def test_super_admin_can_access(self, api_client, super_admin, seed_data):
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'superadmin', 'password': 'adminpass123',
+            'phone_number': '0714345678', 'password': 'adminpass123',
         })
         token = login_resp.json()['data']['access']
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
@@ -65,7 +66,7 @@ class TestOverviewReport:
 
     def test_non_super_admin_cannot_access(self, api_client, seed_data):
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'admin1', 'password': 'pass123',
+            'phone_number': '0713345678', 'password': 'pass123',
         })
         token = login_resp.json()['data']['access']
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
@@ -77,7 +78,7 @@ class TestOverviewReport:
 class TestSearchReport:
     def test_super_admin_can_access(self, api_client, super_admin, seed_data):
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'superadmin', 'password': 'adminpass123',
+            'phone_number': '0714345678', 'password': 'adminpass123',
         })
         token = login_resp.json()['data']['access']
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')

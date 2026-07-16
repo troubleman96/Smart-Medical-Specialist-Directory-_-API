@@ -130,3 +130,40 @@ class TestNotificationDispatcher:
         patient.save()
         log = NotificationDispatcher._send('', 'Test', appointment)
         assert log.status == NotificationStatus.FAILED
+
+    def test_appointment_requested_creates_log(self, notification_setup):
+        _, _, _, _, appointment = notification_setup
+        log = NotificationDispatcher.appointment_requested(appointment)
+        assert log.status == NotificationStatus.PENDING
+        assert log.recipient == '+255712345678'
+        assert appointment.reference_number in log.message
+        assert 'received' in log.message.lower()
+
+    def test_otp_verification_creates_log(self, notification_setup):
+        _, _, patient, _, _ = notification_setup
+        log = NotificationDispatcher.otp_verification(patient, '123456')
+        assert log.status == NotificationStatus.PENDING
+        assert log.recipient == '+255712345678'
+        assert '123456' in log.message
+
+    def test_hospital_registration_received_creates_log(self, notification_setup):
+        hospital, _, _, _, _ = notification_setup
+        log = NotificationDispatcher.hospital_registration_received(hospital, '+255754111222')
+        assert log.status == NotificationStatus.PENDING
+        assert log.recipient == '+255754111222'
+        assert hospital.name in log.message
+        assert 'pending' in log.message.lower()
+
+    def test_hospital_verified_creates_log(self, notification_setup):
+        hospital, _, _, _, _ = notification_setup
+        log = NotificationDispatcher.hospital_verified(hospital, '+255754111222')
+        assert log.status == NotificationStatus.PENDING
+        assert hospital.name in log.message
+        assert 'verified' in log.message.lower()
+
+    def test_hospital_suspended_creates_log(self, notification_setup):
+        hospital, _, _, _, _ = notification_setup
+        log = NotificationDispatcher.hospital_suspended(hospital, '+255754111222')
+        assert log.status == NotificationStatus.PENDING
+        assert hospital.name in log.message
+        assert 'suspended' in log.message.lower()

@@ -22,9 +22,10 @@ def hospital_data():
         'address': '123 Test Street, Dar es Salaam',
         'phone': '+255712345678',
         'email': 'hospital@test.com',
+        'admin_phone_number': '0713345678',
+        'admin_password': 'securepass123',
         'admin_username': 'hospitaladmin',
         'admin_email': 'admin@hospital.com',
-        'admin_password': 'securepass123',
     }
 
 
@@ -34,6 +35,7 @@ def super_admin_user():
         username='superadmin',
         email='super@test.com',
         password='adminpass123',
+        phone_number='+255714345678',
     )
     user.role = User.Role.SUPER_ADMIN
     user.save()
@@ -78,7 +80,7 @@ class TestHospitalMe:
     def test_hospital_admin_get_own_hospital(self, api_client, hospital_data):
         reg_resp = api_client.post('/api/hospitals/register/', hospital_data)
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'hospitaladmin',
+            'phone_number': '0713345678',
             'password': 'securepass123',
         })
         token = login_resp.json()['data']['access']
@@ -97,7 +99,7 @@ class TestVerifyHospital:
         hospital_id = reg_resp.json()['data']['id']
 
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'superadmin',
+            'phone_number': '0714345678',
             'password': 'adminpass123',
         })
         token = login_resp.json()['data']['access']
@@ -109,7 +111,7 @@ class TestVerifyHospital:
 
     def test_invalid_transition_rejected(self, api_client, super_admin_user, verified_hospital):
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'superadmin',
+            'phone_number': '0714345678',
             'password': 'adminpass123',
         })
         token = login_resp.json()['data']['access']
@@ -126,7 +128,7 @@ class TestVerifyHospital:
 class TestHospitalList:
     def test_super_admin_can_list_hospitals(self, api_client, super_admin_user, verified_hospital):
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'superadmin',
+            'phone_number': '0714345678',
             'password': 'adminpass123',
         })
         token = login_resp.json()['data']['access']
@@ -138,7 +140,7 @@ class TestHospitalList:
     def test_non_super_admin_cannot_list(self, api_client, hospital_data):
         api_client.post('/api/hospitals/register/', hospital_data)
         login_resp = api_client.post('/api/auth/login/', {
-            'username': 'hospitaladmin',
+            'phone_number': '0713345678',
             'password': 'securepass123',
         })
         token = login_resp.json()['data']['access']

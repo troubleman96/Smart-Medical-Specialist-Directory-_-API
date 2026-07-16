@@ -32,16 +32,20 @@ class RegisterHospitalView(generics.GenericAPIView):
                 address=data['address'],
                 phone=data['phone'],
                 email=data['email'],
+                admin_phone_number=data['admin_phone_number'],
+                admin_password=data['admin_password'],
                 admin_username=data['admin_username'],
                 admin_email=data['admin_email'],
-                admin_password=data['admin_password'],
             )
         except ValueError as e:
             return error_response(errors={'detail': str(e)}, status_code=400)
 
+        _notify_registration_received(hospital, user)
+        _send_admin_otp(user)
+
         return success_response(
             data=HospitalSerializer(hospital).data,
-            message='Hospital registered successfully. Awaiting verification.',
+            message='Hospital registered successfully. Awaiting verification — a confirmation SMS has been sent.',
             status_code=201,
         )
 
@@ -83,6 +87,8 @@ class VerifyHospitalView(generics.GenericAPIView):
         except ValueError as e:
             return error_response(errors={'detail': str(e)}, status_code=400)
 
+        _notify_status_change(hospital)
+
         return success_response(
             data=HospitalSerializer(hospital).data,
             message=f'Hospital status updated to {hospital.status}.',
@@ -94,3 +100,33 @@ class HospitalListView(generics.ListAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = HospitalListSerializer
     queryset = Hospital.objects.all()
+
+
+def _notify_registration_received(hospital, admin_user):
+    try:
+        from apps.notifications.services import NotificationDispatcher
+        NotificationDispatcher.hospital_registration_received(hospital, admin_user.phone_number)
+    except Exception:
+        pass
+
+
+def _send_admin_otp(admin_user):
+    try:
+        from apps.accounts.services import OtpService
+        OtpService.generate_and_send(admin_user)
+    except Exception:
+        pass
+
+
+def _notify_status_change(hospital):
+    try:
+        from apps.notifications.services import NotificationDispatcher
+        admin = hospital.admins.filter(role='HOSPITAL_ADMIN').first()
+        if not admin:
+            return
+        if hospital.status == 'VERIFIED':
+            NotificationDispatcher.hospital_verified(hospital, admin.phone_number)
+        elif hospital.status == 'SUSPENDED':
+            NotificationDispatcher.hospital_suspended(hospital, admin.phone_number)
+    except Exception:
+        pass
