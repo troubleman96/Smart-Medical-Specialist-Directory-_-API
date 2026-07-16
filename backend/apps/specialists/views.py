@@ -8,6 +8,7 @@ from .services import ManageSpecialistService
 from .serializers import (
     SpecialistSerializer,
     SpecialistListSerializer,
+    PublicSpecialistSerializer,
     CreateSpecialistSerializer,
     UpdateSpecialistSerializer,
 )
@@ -97,5 +98,5 @@ class PublicSpecialistDetailView(generics.GenericAPIView):
         if not specialist:
             return error_response(errors={'detail': 'Specialist not found.'}, status_code=404)
 
-        serializer = SpecialistListSerializer(specialist)
+        serializer = PublicSpecialistSerializer(specialist)
         return success_response(data=serializer.data)

@@ -105,6 +105,27 @@ class NotificationDispatcher:
         )
 
     @staticmethod
+    def new_booking_for_hospital(appointment):
+        hospital = appointment.hospital
+        phone = hospital.phone
+        if not phone:
+            return None
+
+        message = (
+            f"New booking!\n"
+            f"Patient: {appointment.patient.username}\n"
+            f"Specialist: Dr. {appointment.specialist.full_name} ({appointment.specialist.specialization})\n"
+            f"Reference: {appointment.reference_number}\n"
+            f"Date: {appointment.scheduled_at.strftime('%d %B %Y at %H:%M')}\n"
+            f"Please confirm or cancel this appointment."
+        )
+        return NotificationDispatcher._send(
+            phone_number=phone,
+            message=message,
+            appointment=appointment,
+        )
+
+    @staticmethod
     def _send(phone_number, message, appointment=None):
         if not phone_number:
             log = NotificationLog.objects.create(

@@ -11,7 +11,7 @@ def send_sms_task(self, notification_log_id):
     except NotificationLog.DoesNotExist:
         return
 
-    from notifications.services import SmsService, SmsDeliveryError
+    from apps.notifications.services import SmsService, SmsDeliveryError
 
     try:
         result = SmsService.send(log.recipient, log.message)

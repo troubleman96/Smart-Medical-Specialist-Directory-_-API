@@ -32,6 +32,8 @@ class CreateAppointmentView(generics.GenericAPIView):
         except ValueError as e:
             return error_response(errors={'detail': str(e)}, status_code=400)
 
+        _notify_hospital_of_booking(appointment)
+
         return success_response(
             data=AppointmentSerializer(appointment).data,
             message='Appointment booked successfully.',
@@ -82,7 +84,28 @@ class UpdateAppointmentStatusView(generics.GenericAPIView):
         except ValueError as e:
             return error_response(errors={'detail': str(e)}, status_code=400)
 
+        _notify_patient_of_status_change(appointment)
+
         return success_response(
             data=AppointmentSerializer(appointment).data,
             message=f'Appointment status updated to {appointment.status}.',
         )
+
+
+def _notify_hospital_of_booking(appointment):
+    try:
+        from apps.notifications.services import NotificationDispatcher
+        NotificationDispatcher.new_booking_for_hospital(appointment)
+    except Exception:
+        pass
+
+
+def _notify_patient_of_status_change(appointment):
+    try:
+        from apps.notifications.services import NotificationDispatcher
+        if appointment.status == 'CONFIRMED':
+            NotificationDispatcher.appointment_confirmed(appointment)
+        elif appointment.status == 'CANCELLED':
+            NotificationDispatcher.appointment_cancelled(appointment)
+    except Exception:
+        pass

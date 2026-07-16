@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Specialist
+from apps.hospitals.serializers import HospitalSerializer
 
 
 class SpecialistSerializer(serializers.ModelSerializer):
@@ -14,6 +15,15 @@ class SpecialistListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialist
         fields = ['id', 'full_name', 'specialization', 'license_no', 'is_active', 'created_at']
+
+
+class PublicSpecialistSerializer(serializers.ModelSerializer):
+    hospital = HospitalSerializer(read_only=True)
+
+    class Meta:
+        model = Specialist
+        fields = ['id', 'full_name', 'specialization', 'license_no', 'photo',
+                  'is_active', 'hospital', 'created_at']
 
 
 class CreateSpecialistSerializer(serializers.Serializer):
