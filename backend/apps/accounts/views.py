@@ -32,6 +32,7 @@ class RegisterPatientView(generics.GenericAPIView):
             user = RegisterUserService.register_patient(
                 phone_number=serializer.validated_data['phone_number'],
                 password=serializer.validated_data['password'],
+                full_name=serializer.validated_data['full_name'],
                 username=serializer.validated_data.get('username', ''),
                 email=serializer.validated_data.get('email', ''),
             )

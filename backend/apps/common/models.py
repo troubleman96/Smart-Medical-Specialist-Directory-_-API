@@ -18,6 +18,7 @@ class User(AbstractUser):
     )
     phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
     phone_verified = models.BooleanField(default=False)
+    full_name = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
         db_table = 'users'

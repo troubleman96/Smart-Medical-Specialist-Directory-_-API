@@ -136,7 +136,7 @@ class NotificationDispatcher:
 
         message = (
             f"New booking!\n"
-            f"Patient: {appointment.patient.username}\n"
+            f"Patient: {appointment.patient.full_name or appointment.patient.username}\n"
             f"Specialist: Dr. {appointment.specialist.full_name} ({appointment.specialist.specialization})\n"
             f"Reference: {appointment.reference_number}\n"
             f"Date: {appointment.scheduled_at.strftime('%d %B %Y at %H:%M')}\n"

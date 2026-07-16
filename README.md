@@ -345,6 +345,7 @@ Request body:
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
+| `full_name` | string | yes | max 255 chars; the patient's display name — shown to the hospital in the new-booking SMS instead of the auto-derived username |
 | `phone_number` | string | yes | Any accepted format; normalized before storage; must be unique |
 | `password` | string | yes | min length 8 |
 | `username` | string | no | max 150 chars; auto-derived from phone if omitted |
@@ -353,7 +354,7 @@ Request body:
 ```bash
 curl -X POST http://localhost:8000/api/auth/register/patient/ \
   -H "Content-Type: application/json" \
-  -d '{"phone_number":"0712345678","password":"SecurePass123"}'
+  -d '{"full_name":"Amara Kessy","phone_number":"0712345678","password":"SecurePass123"}'
 ```
 
 201 response:
@@ -366,7 +367,7 @@ curl -X POST http://localhost:8000/api/auth/register/patient/ \
     "access": "eyJ...",
     "refresh": "eyJ...",
     "user": {
-      "id": 5, "username": "255712345678", "email": "", "role": "PATIENT",
+      "id": 5, "username": "255712345678", "full_name": "Amara Kessy", "email": "", "role": "PATIENT",
       "phone_number": "+255712345678", "phone_verified": false,
       "hospital": null, "date_joined": "2026-07-16T10:50:32.235708+03:00"
     }
@@ -375,7 +376,7 @@ curl -X POST http://localhost:8000/api/auth/register/patient/ \
 }
 ```
 
-400 causes: phone number already registered, invalid phone format, password under 8 chars, username already taken, email already taken.
+400 causes: missing full name, phone number already registered, invalid phone format, password under 8 chars, username already taken, email already taken.
 
 #### `POST /api/auth/login/` — `AllowAny`
 
@@ -667,6 +668,7 @@ COMPLETED → (terminal, no further transitions)
 | `hospital` | FK → `Hospital`, nullable | set only for `HOSPITAL_ADMIN`; `on_delete=SET_NULL` |
 | `phone_number` | string, unique, nullable | canonical `+255XXXXXXXXX` |
 | `phone_verified` | boolean, default `False` | |
+| `full_name` | string, blank-default | required at patient registration; blank for accounts created before this field existed or via other paths (hospital admin, super admin) that don't collect it |
 | plus all of Django's `AbstractUser` fields | | `username`, `email`, `password` (hashed), `is_active`, `is_staff`, `date_joined`, etc. |
 
 ### `accounts.PhoneOTP` (`db_table = 'phone_otps'`)

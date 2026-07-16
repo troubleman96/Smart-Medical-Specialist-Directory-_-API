@@ -14,6 +14,7 @@ def api_client():
 @pytest.fixture
 def patient_data():
     return {
+        'full_name': 'Test Patient',
         'phone_number': '0712345678',
         'password': 'securepass123',
         'username': 'testpatient',
@@ -57,11 +58,19 @@ class TestRegisterPatient:
 
     def test_username_auto_derived_when_omitted(self, api_client):
         response = api_client.post('/api/auth/register/patient/', {
+            'full_name': 'No Username Patient',
             'phone_number': '0712345670',
             'password': 'securepass123',
         })
         assert response.status_code == 201
         assert User.objects.filter(username='255712345670').exists()
+
+    def test_register_patient_missing_full_name(self, api_client):
+        response = api_client.post('/api/auth/register/patient/', {
+            'phone_number': '0712345671',
+            'password': 'securepass123',
+        })
+        assert response.status_code == 400
 
 
 @pytest.mark.django_db

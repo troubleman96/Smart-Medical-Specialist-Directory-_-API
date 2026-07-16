@@ -7,11 +7,12 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'phone_number', 'phone_verified', 'hospital', 'date_joined']
+        fields = ['id', 'username', 'full_name', 'email', 'role', 'phone_number', 'phone_verified', 'hospital', 'date_joined']
         read_only_fields = ['id', 'role', 'hospital', 'phone_verified', 'date_joined']
 
 
 class RegisterPatientSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=255)
     phone_number = serializers.CharField(max_length=20)
     password = serializers.CharField(min_length=8, write_only=True)
     username = serializers.CharField(max_length=150, required=False, default='')

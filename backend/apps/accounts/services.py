@@ -23,7 +23,7 @@ def _derive_username(phone_number):
 
 class RegisterUserService:
     @staticmethod
-    def register_patient(phone_number, password, username='', email=''):
+    def register_patient(phone_number, password, full_name='', username='', email=''):
         normalized_phone = _normalize_phone(phone_number)
         if User.objects.filter(phone_number=normalized_phone).exists():
             raise ValueError('An account with this phone number already exists.')
@@ -36,6 +36,7 @@ class RegisterUserService:
 
         user = User.objects.create(
             username=username,
+            full_name=full_name,
             email=email,
             password=make_password(password),
             role=User.Role.PATIENT,
