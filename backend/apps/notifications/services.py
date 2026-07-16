@@ -11,18 +11,26 @@ class SmsDeliveryError(Exception):
 
 
 class SmsService:
-    VALID_TZ_PREFIXES = ['071', '072', '073', '074', '075', '076', '077', '078']
+    # Tanzania mobile numbers: 9 digits after the +255 country code, starting
+    # with 6 or 7 (covers all current carriers/prefixes, not just a fixed list).
+    LOCAL_NUMBER_RE = re.compile(r'[67]\d{8}')
 
     @staticmethod
     def normalize_phone(phone_number):
         cleaned = re.sub(r'[\s\-\(\)]', '', phone_number)
         if cleaned.startswith('+255'):
-            return cleaned
-        if cleaned.startswith('255'):
-            return f'+{cleaned}'
-        if cleaned.startswith('0') and cleaned[:3] in SmsService.VALID_TZ_PREFIXES:
-            return f'+255{cleaned[1:]}'
-        raise ValueError(f'Invalid Tanzania phone number: {phone_number}')
+            digits = cleaned[4:]
+        elif cleaned.startswith('255'):
+            digits = cleaned[3:]
+        elif cleaned.startswith('0'):
+            digits = cleaned[1:]
+        else:
+            digits = cleaned
+
+        if not SmsService.LOCAL_NUMBER_RE.fullmatch(digits):
+            raise ValueError(f'Invalid Tanzania phone number: {phone_number}')
+
+        return f'+255{digits}'
 
     @staticmethod
     def send(phone_number, message):
