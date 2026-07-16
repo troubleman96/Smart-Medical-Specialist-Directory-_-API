@@ -17,7 +17,8 @@ Companion frontend: [`kindamba-ui`](../kindamba-ui) (TanStack Start + React) —
 - [SMS notifications reference](#sms-notifications-reference)
 - [Pagination & throttling](#pagination--throttling)
 - [Testing](#testing)
-- [Deployment / pushing changes](#deployment--pushing-changes)
+- [Pushing changes (git, explained simply)](#pushing-changes-git-explained-simply)
+- [Deployment (production)](#deployment-production)
 
 ## Domain model (read this first)
 
@@ -792,15 +793,50 @@ pytest -k test_login_success    # one test
 
 71 tests across all apps as of this writing. Notification-triggering code paths (registration, booking, hospital verification) are tested by asserting on the `NotificationLog` row's `status`/`recipient`/`message` content — not by mocking the SendAfrica HTTP call for every path, since `_send()`'s Celery dispatch never reaches a live worker inside the test process (see the note in [Getting started](#run-tests)). `apps/notifications/tests.py: TestSmsServiceSend` does mock `requests.post` directly to test `SmsService.send()`'s own success/failure parsing in isolation.
 
-## Deployment / pushing changes
+## Pushing changes (git, explained simply)
 
-This repo is separate from the frontend (`kindamba-ui`) and has its own git history and remote — commit and push it independently:
+This repo is separate from the frontend (`kindamba-ui`) — it has its own history and its own remote on GitHub, and you commit/push it independently from the UI repo. "Pushing" just means: upload your saved changes from your computer to GitHub, where everyone else on the project can see and pull them.
+
+This repo's remote is set up over **SSH** (`git@github.com:...`, visible via `git remote -v`), not a plain web link — so before you can push for the first time, two things need to be true:
+
+1. **You've been added as a collaborator** on the GitHub repository (ask whoever owns it — currently `troubleman96` — to add your GitHub account under the repo's Settings → Collaborators).
+2. **Your computer has proven its identity to GitHub via an SSH key.** This is a one-time setup:
+   ```bash
+   ssh-keygen -t ed25519 -C "your-email@example.com"    # press Enter three times to accept the defaults
+   ```
+   This creates a public/private key pair (on Windows, in `C:\Users\<you>\.ssh\`). Print the **public** key and copy it:
+   ```bash
+   cat ~/.ssh/id_ed25519.pub          # macOS/Linux
+   type $env:USERPROFILE\.ssh\id_ed25519.pub    # Windows PowerShell
+   ```
+   Paste that into GitHub: **Settings → SSH and GPG keys → New SSH key**. Then test it worked:
+   ```bash
+   ssh -T git@github.com
+   ```
+   It should greet you by username ("Hi `<your-username>`! You've successfully authenticated..."). If you'd rather avoid SSH keys entirely, GitHub's own [Desktop app](https://desktop.github.com/) handles authentication for you with a browser login instead — a good alternative if the above feels like too much.
+
+### The everyday workflow
+
+Every time you've made changes you want to save to GitHub, from inside the `Kindamba` folder:
 
 ```bash
-git status
-git add <files>
-git commit -m "..."
-git push origin master
+git status                    # 1. see what you changed — nothing is sent anywhere yet, this is just a look
+git add <file1> <file2>       # 2. "stage" the specific files you want to include (or `git add .` for everything shown)
+git commit -m "what changed"  # 3. save a snapshot locally, with a short message describing it
+git push origin master        # 4. upload that snapshot (and any earlier unpushed ones) to GitHub
 ```
+
+Nothing leaves your computer until step 4 — steps 1–3 are entirely local, so it's safe to `git status` and `git add` as often as you like while figuring things out. **Never `git add .env`** — it holds real secrets and is already excluded via `.gitignore`, but always double-check `git status` doesn't list it before committing.
+
+### Common errors, and what they actually mean
+
+| Message | What it means | Fix |
+|---|---|---|
+| `Permission denied (publickey)` | GitHub doesn't recognize your machine yet | Finish the SSH key setup above, or use GitHub Desktop instead |
+| `remote: Repository not found` | Either the URL is wrong, or you haven't been added as a collaborator yet | Confirm `git remote -v` matches the repo, and confirm your GitHub account has been invited |
+| `! [rejected] ... (fetch first)` / `failed to push some refs` | Someone else pushed changes since you last pulled — git refuses to silently overwrite them | Run `git pull origin master` first (this merges their changes into yours), resolve anything it flags as conflicting, then `git push origin master` again |
+| `Please tell me who you are` | Git needs a name/email for commit history (once per machine) | `git config --global user.name "Your Name"` and `git config --global user.email "you@example.com"` |
+
+## Deployment (production)
 
 For production, set `DJANGO_SETTINGS_MODULE=config.settings.prod`, provide a real `DATABASE_URL` (PostgreSQL), set `DJANGO_ALLOWED_HOSTS` and `CORS_ALLOWED_ORIGINS`, and serve behind gunicorn with a reverse proxy. Run `python manage.py collectstatic` before deploying. Before relying on specialist photo uploads in production, add proper `MEDIA_ROOT`/`MEDIA_URL` (or cloud storage) configuration — see the caveat under [Specialists](#specialists--apispecialists).
