@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from drf_spectacular.utils import extend_schema
 from apps.common.responses import success_response, error_response
 from apps.common.permissions import IsSuperAdmin, IsHospitalAdmin
 from .models import Hospital
@@ -12,6 +13,7 @@ from .serializers import (
 )
 
 
+@extend_schema(tags=['Hospitals'], summary='Register a new hospital')
 class RegisterHospitalView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = RegisterHospitalSerializer
@@ -44,6 +46,7 @@ class RegisterHospitalView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Hospitals'], summary='Get or update own hospital profile')
 class HospitalMeView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
     serializer_class = HospitalSerializer
@@ -59,6 +62,7 @@ class HospitalMeView(generics.GenericAPIView):
         return success_response(data=serializer.data, message='Hospital updated successfully.')
 
 
+@extend_schema(tags=['Hospitals'], summary='Verify or suspend a hospital (Super Admin)')
 class VerifyHospitalView(generics.GenericAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = VerifyHospitalSerializer
@@ -85,6 +89,7 @@ class VerifyHospitalView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Hospitals'], summary='List all hospitals (Super Admin)')
 class HospitalListView(generics.ListAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = HospitalListSerializer

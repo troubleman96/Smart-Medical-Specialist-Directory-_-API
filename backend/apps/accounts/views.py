@@ -1,6 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 from apps.common.responses import success_response, error_response
 from apps.common.permissions import IsPatient
 from .services import RegisterUserService, AuthService
@@ -12,6 +13,7 @@ from .serializers import (
 )
 
 
+@extend_schema(tags=['Auth'], summary='Register a new patient account')
 class RegisterPatientView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = RegisterPatientSerializer
@@ -38,6 +40,7 @@ class RegisterPatientView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Auth'], summary='Login with username and password')
 class LoginView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
@@ -61,6 +64,7 @@ class LoginView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Auth'], summary='Get current user profile')
 class MeView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer

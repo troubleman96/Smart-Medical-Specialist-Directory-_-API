@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from drf_spectacular.utils import extend_schema
 from apps.common.responses import success_response, error_response
 from apps.common.permissions import IsHospitalAdmin
 from .models import Specialist
@@ -12,6 +13,7 @@ from .serializers import (
 )
 
 
+@extend_schema(tags=['Specialists'], summary='Create a new specialist')
 class CreateSpecialistView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
     serializer_class = CreateSpecialistSerializer
@@ -39,6 +41,7 @@ class CreateSpecialistView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Specialists'], summary='Update a specialist')
 class UpdateSpecialistView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
     serializer_class = UpdateSpecialistSerializer
@@ -62,6 +65,7 @@ class UpdateSpecialistView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Specialists'], summary='Soft delete a specialist')
 class DeleteSpecialistView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
 
@@ -74,6 +78,7 @@ class DeleteSpecialistView(generics.GenericAPIView):
         return success_response(message='Specialist deleted successfully.', status_code=204)
 
 
+@extend_schema(tags=['Specialists'], summary='List specialists for own hospital')
 class HospitalSpecialistsView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
 
@@ -83,6 +88,7 @@ class HospitalSpecialistsView(generics.GenericAPIView):
         return success_response(data=serializer.data)
 
 
+@extend_schema(tags=['Specialists'], summary='Public view of a specialist (verified hospitals only)')
 class PublicSpecialistDetailView(generics.GenericAPIView):
     permission_classes = [AllowAny]
 

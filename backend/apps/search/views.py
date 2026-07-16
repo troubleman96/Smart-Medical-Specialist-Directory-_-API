@@ -1,6 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import AnonRateThrottle
+from drf_spectacular.utils import extend_schema
 from apps.common.responses import success_response, error_response
 from .services import GeoSearchService
 from .serializers import NearbySearchSerializer
@@ -10,6 +11,7 @@ class NearbySearchThrottle(AnonRateThrottle):
     rate = '30/minute'
 
 
+@extend_schema(tags=['Search'], summary='Find nearby hospitals and specialists')
 class NearbySearchView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     throttle_classes = [NearbySearchThrottle]

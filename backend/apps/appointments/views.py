@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema
 from apps.common.responses import success_response, error_response
 from apps.common.permissions import IsPatient, IsHospitalAdmin
 from .models import Appointment
@@ -11,6 +12,7 @@ from .serializers import (
 )
 
 
+@extend_schema(tags=['Appointments'], summary='Book a new appointment')
 class CreateAppointmentView(generics.GenericAPIView):
     permission_classes = [IsPatient]
     serializer_class = CreateAppointmentSerializer
@@ -37,6 +39,7 @@ class CreateAppointmentView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Appointments'], summary='List own appointments (Patient)')
 class PatientAppointmentsView(generics.GenericAPIView):
     permission_classes = [IsPatient]
 
@@ -46,6 +49,7 @@ class PatientAppointmentsView(generics.GenericAPIView):
         return success_response(data=serializer.data)
 
 
+@extend_schema(tags=['Appointments'], summary='List hospital appointments')
 class HospitalAppointmentsView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
 
@@ -55,6 +59,7 @@ class HospitalAppointmentsView(generics.GenericAPIView):
         return success_response(data=serializer.data)
 
 
+@extend_schema(tags=['Appointments'], summary='Update appointment status')
 class UpdateAppointmentStatusView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
     serializer_class = UpdateAppointmentStatusSerializer

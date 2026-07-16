@@ -1,11 +1,13 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema
 from apps.common.responses import success_response, error_response
 from apps.common.permissions import IsHospitalAdmin
 from .services import AvailabilityService, ScheduleTemplateService
 from .serializers import SetAvailabilitySerializer, AvailabilityQuerySerializer, WeeklyScheduleSerializer
 
 
+@extend_schema(tags=['Availability'], summary='Set specialist availability')
 class SetAvailabilityView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
     serializer_class = SetAvailabilitySerializer
@@ -38,6 +40,7 @@ class SetAvailabilityView(generics.GenericAPIView):
         )
 
 
+@extend_schema(tags=['Availability'], summary='List availability for own hospital')
 class AvailabilityListView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
 
@@ -65,6 +68,7 @@ class AvailabilityListView(generics.GenericAPIView):
         return success_response(data=data)
 
 
+@extend_schema(tags=['Availability'], summary='Create weekly schedule template')
 class ScheduleTemplateView(generics.GenericAPIView):
     permission_classes = [IsHospitalAdmin]
     serializer_class = WeeklyScheduleSerializer
